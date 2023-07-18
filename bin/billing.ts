@@ -2,20 +2,33 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { BillingStack } from '../lib/billing-stack';
+import { PrerequisitesStack } from '../lib/prerequisites-stack';
 
 const app = new cdk.App();
-new BillingStack(app, 'BillingStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+const globalConfig = {
+    appName: 'SolidSnake', // change this
+    deploymentStage: 'staging',
+    hostedZoneName: 'solidsnake.millionairecodersclub.com', //change this
+    cdkEnv: {
+        region: 'us-east-2', // maybe change this but you might not wanna use us-east-1
+        account: '891672395302', // change this
+    },
+};
 
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+const preRequisitesStack = new PrerequisitesStack(app, `${globalConfig.appName}-prerequisites`, {
+    appName: globalConfig.appName,
+    deploymentStage: globalConfig.deploymentStage,
+    hostedZoneName: globalConfig.hostedZoneName,
+    env: globalConfig.cdkEnv,
+});
 
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
+new BillingStack(app, `${globalConfig.appName}-compute`, {
+    appName: globalConfig.appName,
+    deploymentStage: globalConfig.deploymentStage,
+    hostedZone: preRequisitesStack.hostedZone,
+    resourceRoot: {
+        lambdaCommonProps: {},
+        resources: [],
+    },
 });
