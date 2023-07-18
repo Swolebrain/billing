@@ -3,6 +3,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdaNodeJs from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
 import { BillingStackProps, ResourceDefinition, ResourceRootDefinition } from '../@types';
 
@@ -24,10 +25,18 @@ export class BillingStack extends cdk.Stack {
             validation: acm.CertificateValidation.fromDns(props.hostedZone),
         });
 
-        new apigateway.DomainName(this, `${this.node.id}-customDomainName`, {
+        const customDomain = new apigateway.DomainName(this, `${this.node.id}-customDomainName`, {
             domainName: subDomainName,
             certificate,
-        }).addApiMapping(api.deploymentStage);
+        });
+
+        customDomain.addApiMapping(api.deploymentStage);
+
+        new route53.ARecord(this, 'ApiCustomDomainAliasRecord', {
+            zone: props.hostedZone,
+            target: route53.RecordTarget.fromAlias(new cdk.aws_route53_targets.ApiGatewayDomain(customDomain)),
+            recordName: subDomainName,
+        });
 
         new cdk.CfnOutput(this, `${this.node.id}-apiEndpoint`, {
             value: api.url,
