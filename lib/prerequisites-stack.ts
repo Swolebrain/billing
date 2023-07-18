@@ -1,13 +1,7 @@
+import { HostedZone } from 'aws-cdk-lib/aws-route53';
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
-import { HostedZone } from 'aws-cdk-lib/aws-route53';
-import { aws_ssm as ssm } from 'aws-cdk-lib';
-
-interface PrerequisitesStackProps extends cdk.StackProps {
-    appName: string;
-    deploymentStage: string;
-    hostedZoneName: string;
-}
+import { PrerequisitesStackProps } from '../@types';
 
 /**
  * This stack is for things that need to be there before the compute stack is deployed.

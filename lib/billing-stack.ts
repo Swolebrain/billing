@@ -1,33 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdaNodeJs from 'aws-cdk-lib/aws-lambda-nodejs';
-import * as route53 from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
-
-interface LambdaDefinition {
-    name: string;
-    entry: string;
-    method: string;
-}
-
-interface ResourceDefinition {
-    name: string;
-    lambdaCommonProps: lambdaNodeJs.NodejsFunctionProps;
-    lambdas: LambdaDefinition[];
-    resources?: ResourceDefinition[];
-}
-
-interface ResourceRootDefinition {
-    lambdaCommonProps: lambdaNodeJs.NodejsFunctionProps;
-    resources: ResourceDefinition[];
-}
-
-interface BillingStackProps extends cdk.StackProps {
-    appName: string;
-    deploymentStage: string;
-    hostedZone: route53.IHostedZone;
-    resourceRoot: ResourceRootDefinition;
-}
+import { BillingStackProps, ResourceDefinition, ResourceRootDefinition } from '../@types';
 
 export class BillingStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: BillingStackProps) {
@@ -37,11 +14,31 @@ export class BillingStack extends cdk.Stack {
             restApiName: `${props.appName}-${props.deploymentStage}`,
         });
 
-        this.addResourcesRecursively(api.root, props.resourceRoot.resources, props.resourceRoot.lambdaCommonProps);
+        this.addResourcesRecursively(api.root, props.resourceRoot.resources, this.getNodeJsFunctionConfig(props.resourceRoot.envConfig));
 
-        new cdk.CfnOutput(this, 'ApiEndpoint', {
+        const subDomain = `${props.deploymentStage}-api`;
+        const subDomainName = `${subDomain}.${props.hostedZone.zoneName}`;
+
+        const certificate = new acm.Certificate(this, `${this.node.id}-certificate`, {
+            domainName: subDomainName,
+            validation: acm.CertificateValidation.fromDns(props.hostedZone),
+        });
+
+        new apigateway.DomainName(this, `${this.node.id}-customDomainName`, {
+            domainName: subDomainName,
+            certificate,
+        }).addApiMapping(api.deploymentStage);
+
+        new cdk.CfnOutput(this, `${this.node.id}-apiEndpoint`, {
             value: api.url,
         });
+    }
+
+    private getNodeJsFunctionConfig(envConfig: ResourceRootDefinition['envConfig']): lambdaNodeJs.NodejsFunctionProps {
+        return {
+            runtime: lambda.Runtime[`${envConfig.runtime}`] as lambda.Runtime,
+            depsLockFilePath: envConfig.depsLockFilePath,
+        };
     }
 
     private addResourcesRecursively(
@@ -52,8 +49,8 @@ export class BillingStack extends cdk.Stack {
     ): void {
         resourceDefs.forEach((resourceDef) => {
             const resourceLambdaCommonProps =
-                level > 0 && resourceDef.lambdaCommonProps
-                    ? { ...lambdaCommonProps, ...resourceDef.lambdaCommonProps }
+                level > 0 && resourceDef.resourceEnvConfig
+                    ? { ...lambdaCommonProps, ...this.getNodeJsFunctionConfig(resourceDef.resourceEnvConfig) }
                     : { ...lambdaCommonProps };
 
             const resource = parentResource.addResource(resourceDef.name);
@@ -66,7 +63,7 @@ export class BillingStack extends cdk.Stack {
 
                 const lambdaIntegration = new apigateway.LambdaIntegration(lambdaFunction);
 
-                resource.addMethod(lambdaDef.method, lambdaIntegration);
+                resource.addMethod(lambda.HttpMethod[lambdaDef.method], lambdaIntegration);
             });
 
             if (resourceDef.resources) {

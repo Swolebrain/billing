@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
+
 import * as cdk from 'aws-cdk-lib';
 import { BillingStack } from '../lib/billing-stack';
 import { PrerequisitesStack } from '../lib/prerequisites-stack';
+import { config } from '../resources/root.config';
 
 const app = new cdk.App();
 
@@ -12,7 +14,6 @@ const globalConfig = {
     hostedZoneName: 'solidsnake.millionairecodersclub.com', //change this
     cdkEnv: {
         region: 'us-east-2', // maybe change this but you might not wanna use us-east-1
-        account: '891672395302', // change this
     },
 };
 
@@ -27,8 +28,6 @@ new BillingStack(app, `${globalConfig.appName}-compute`, {
     appName: globalConfig.appName,
     deploymentStage: globalConfig.deploymentStage,
     hostedZone: preRequisitesStack.hostedZone,
-    resourceRoot: {
-        lambdaCommonProps: {},
-        resources: [],
-    },
+    resourceRoot: config,
+    env: globalConfig.cdkEnv,
 });
