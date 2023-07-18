@@ -28,7 +28,6 @@ const appStack = new AppStack(app, `${globalConfig.appName}-${globalConfig.deplo
     appName: globalConfig.appName,
     deploymentStage: globalConfig.deploymentStage,
     hostedZone: preRequisitesStack.hostedZone,
-    api: preRequisitesStack.api,
     resourceRoot: config,
     env: globalConfig.cdkEnv,
 });

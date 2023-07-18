@@ -11,7 +11,12 @@ export class LambdaRestApiStage extends Construct {
     constructor(scope: Construct, id: string, props: LambdaRestApiStageProps) {
         super(scope, id);
 
-        const deployment = new apigateway.Deployment(this, `${this.node.id}-Deployment`, { api: props.api });
+        const api = new apigateway.RestApi(this, `${this.node.id}-RestApi`, {
+            restApiName: `${props.appName}`,
+            deploy: false,
+        });
+
+        const deployment = new apigateway.Deployment(this, `${this.node.id}-Deployment`, { api });
 
         const stage = new apigateway.Stage(this, `${this.node.id}-Stage`, { deployment, stageName: props.deploymentStage });
 

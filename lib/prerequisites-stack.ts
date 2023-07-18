@@ -18,10 +18,5 @@ export class PrerequisitesStack extends cdk.Stack {
         this.hostedZone = new route53.HostedZone(this, `${this.node.id}-HostedZone`, {
             zoneName: props.hostedZoneName,
         });
-
-        this.api = new apigateway.RestApi(this, `${this.node.id}-ApiGateway`, {
-            restApiName: `${props.appName}`,
-            deploy: false,
-        });
     }
 }
