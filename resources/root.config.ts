@@ -12,7 +12,7 @@ export const config: ResourceRootDefinition = {
             lambdas: [
                 {
                     name: 'PostCheckoutFunction',
-                    entry: join(__dirname, 'checkout', 'post.ts'),
+                    entry: join(__dirname, 'lambdas', 'checkout', 'post.ts'),
                     method: 'GET',
                 },
             ],

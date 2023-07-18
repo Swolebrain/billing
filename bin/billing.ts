@@ -2,7 +2,7 @@
 import 'source-map-support/register';
 
 import * as cdk from 'aws-cdk-lib';
-import { BillingStack } from '../lib/billing-stack';
+import { AppStack } from '../lib/app-stack';
 import { PrerequisitesStack } from '../lib/prerequisites-stack';
 import { config } from '../resources/root.config';
 
@@ -17,17 +17,18 @@ const globalConfig = {
     },
 };
 
-const preRequisitesStack = new PrerequisitesStack(app, `${globalConfig.appName}-prerequisites`, {
+const preRequisitesStack = new PrerequisitesStack(app, `${globalConfig.appName}-AppStack-PrerequisitesStack`, {
     appName: globalConfig.appName,
     deploymentStage: globalConfig.deploymentStage,
     hostedZoneName: globalConfig.hostedZoneName,
     env: globalConfig.cdkEnv,
 });
 
-new BillingStack(app, `${globalConfig.appName}-compute`, {
+const appStack = new AppStack(app, `${globalConfig.appName}-${globalConfig.deploymentStage}-AppStack`, {
     appName: globalConfig.appName,
     deploymentStage: globalConfig.deploymentStage,
     hostedZone: preRequisitesStack.hostedZone,
+    api: preRequisitesStack.api,
     resourceRoot: config,
     env: globalConfig.cdkEnv,
 });
