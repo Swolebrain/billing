@@ -1,8 +1,15 @@
-*.js
-!jest.config.js
-*.d.ts
+# dependencies
 node_modules
 
-# CDK asset staging directory
-.cdk.staging
-cdk.out
+# sst
+.sst
+.build
+
+# opennext
+.open-next
+
+# misc
+.DS_Store
+
+# local env files
+.env*.local
