@@ -1,13 +1,49 @@
-import { Api, StackContext } from 'sst/constructs';
+import { RemovalPolicy } from 'aws-cdk-lib/core';
+import { Api, Config, StackContext, Table } from 'sst/constructs';
 
 export function API({ stack }: StackContext) {
-    stack.setDefaultFunctionProps({
-        runtime: 'nodejs18.x',
+    const membershipsTable = new Table(stack, `MembershipsTable`, {
+        fields: { userId: 'string' },
+        primaryIndex: { partitionKey: 'userId' },
+        cdk: {
+            table: {
+                removalPolicy: RemovalPolicy.DESTROY,
+            },
+        },
     });
 
-    const api = new Api(stack, 'api', {
+    const entitlementsTable = new Table(stack, `EntitlementsTable`, {
+        fields: { entitlementId: 'string' },
+        primaryIndex: { partitionKey: 'entitlementId' },
+        cdk: {
+            table: {
+                removalPolicy: RemovalPolicy.DESTROY,
+            },
+        },
+    });
+
+    const usageRecordsTable = new Table(stack, `UsageRecordsTable`, {
+        fields: { userId: 'string', timestamp: 'number' },
+        primaryIndex: { partitionKey: 'userId', sortKey: 'timestamp' },
+        cdk: {
+            table: {
+                removalPolicy: RemovalPolicy.DESTROY,
+            },
+        },
+    });
+
+    const STRIPE_SECRET_KEY = new Config.Secret(stack, 'STRIPE_SECRET_KEY');
+    const STRIPE_WEBHOOK_SECRET = new Config.Secret(stack, 'STRIPE_WEBHOOK_SECRET');
+
+    stack.setDefaultFunctionProps({
+        runtime: 'nodejs18.x',
+        bind: [membershipsTable, entitlementsTable, usageRecordsTable, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET],
+    });
+
+    const api = new Api(stack, 'RestAPI', {
         routes: {
             'GET /': 'packages/functions/src/index.helloWorld',
+            'POST /webhook': 'packages/functions/src/events/events.eventsHandler',
         },
     });
 
