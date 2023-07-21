@@ -1,0 +1,27 @@
+{
+    "name": "@billing/core",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "devDependencies": {
+        "@types/node": "^20.4.2",
+        "sst": "^2.22.3"
+    },
+    "dependencies": {
+        "aws-sdk": "^2.1419.0",
+        "stripe": "^12.14.0"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Swolebrain/billing.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Swolebrain/billing/issues"
+    },
+    "homepage": "https://github.com/Swolebrain/billing#readme"
+}
