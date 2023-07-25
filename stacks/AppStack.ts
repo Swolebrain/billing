@@ -43,7 +43,7 @@ export function API({ stack }: StackContext) {
     const api = new Api(stack, 'RestAPI', {
         routes: {
             'GET /': 'packages/functions/src/index.helloWorld',
-            'POST /webhook': 'packages/functions/src/events/events.eventsHandler',
+            'POST /webhook': 'packages/functions/src/events.eventsHandler',
         },
     });
 

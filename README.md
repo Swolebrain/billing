@@ -7,7 +7,7 @@ This is a serverless app built with SST to provide a way to easily connect apps 
 Make sure all secrets for the app are set up on AWS SSM and if not you can set them up for your stage as follows:
 
 ```
-$ npx sst secrets set YOUR_SECRET_NAME your_secret_value
+$ npx sst secrets set YOUR_SECRET_NAME your_secret_value --profile your_aws_profile_alias
 ```
 
 These are created with the name `/sst/{appName}/{stageName}/Secret/YOUR_SECRET_NAME/value` in AWS SSM for your account, where {appName} is the name of your SST app, and {stageName} is the stage you are configuring for. If a fallback value for the secret has been created by any other developer connected to the same AWS account, it can be found at AWS SSM for your account named as `/sst/{appName}/.fallback/Secret/YOUR_SECRET_NAME/value`
