@@ -2,5 +2,9 @@
   "hosted-zone:account=891672395302:domainName=millionairecodersclub.com:region=us-east-1": {
     "Id": "/hostedzone/Z08927671LPDI0EY0K7J",
     "Name": "millionairecodersclub.com."
+  },
+  "hosted-zone:account=891672395302:domainName=solidsnake.millionairecodersclub.com:region=us-east-2": {
+    "Id": "/hostedzone/Z03660603IZDI81F97VAQ",
+    "Name": "solidsnake.millionairecodersclub.com."
   }
 }

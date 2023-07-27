@@ -41,6 +41,9 @@ export function API({ stack }: StackContext) {
     });
 
     const api = new Api(stack, 'RestAPI', {
+        customDomain: {
+            domainName: `api.solidsnake.millionairecodersclub.com`,
+        },
         routes: {
             'GET /': 'packages/functions/src/index.helloWorld',
             'POST /webhook': 'packages/functions/src/events.eventsHandler',

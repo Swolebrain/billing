@@ -1,4 +1,4 @@
-import { createEntitlement, updateEntitlement } from '@billing/core/repositories/entitlements';
+import { handleProductCreatedEvent, handleProductUpdatedEvent } from '@billing/core/services/entitlements';
 import { ApiHandler } from 'sst/node/api';
 import { Config } from 'sst/node/config';
 import Stripe from 'stripe';
@@ -36,46 +36,12 @@ export const eventsHandler = ApiHandler(async (apiEvent) => {
 
         switch (stripeEvent.type as StripeEvent) {
             case 'product.created': {
-                const product = stripeEvent.data.object as Stripe.Product;
-                await createEntitlement({
-                    entitlementId: product.id,
-                    name: product.name,
-                    description: product.description,
-                    active: product.active,
-                    linkedStripeActivePriceIds: new Set(),
-                    linkedStripeProductId: product.id,
-                });
+                handleProductCreatedEvent(stripeEvent);
                 break;
             }
             case 'product.updated': {
-                const prev = stripeEvent.data.previous_attributes;
-                if (!prev || Object.keys(prev).length === 0) break;
-
-                const product = stripeEvent.data.object as Stripe.Product;
-                await updateEntitlement({
-                    entitlementId: product.id,
-                    name: prev.hasOwnProperty('name') ? product.name : undefined,
-                    description: prev.hasOwnProperty('description') ? product.description : undefined,
-                });
-
+                handleProductUpdatedEvent(stripeEvent);
                 break;
-            }
-            case 'price.created': {
-                const price = stripeEvent.data.object as Stripe.Price;
-
-                await updateEntitlement({
-                    entitlementId: typeof price.product === 'string' ? price.product : price.product.id,
-                    stripePriceIdsToAdd: price.active ? new Set(price.id) : undefined,
-                });
-            }
-            case 'price.updated': {
-                const price = stripeEvent.data.object as Stripe.Price;
-
-                await updateEntitlement({
-                    entitlementId: typeof price.product === 'string' ? price.product : price.product.id,
-                    stripePriceIdsToAdd: price.active ? new Set(price.id) : undefined,
-                    stripePriceIdsToDelete: !price.active ? new Set(price.id) : undefined,
-                });
             }
             default:
                 console.log(`No handler defined for Stripe event ${stripeEvent.type}`);
