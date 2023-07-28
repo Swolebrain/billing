@@ -1,7 +1,7 @@
-import { AWSError, Request } from 'aws-sdk';
+import { AWSError } from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import { dynamoDb } from 'src/integrations/dynamodb';
+import { dynamoDbClient } from 'src/integrations';
 import { Table } from 'sst/node/table';
 
 export interface EntitlementInterface {
@@ -20,10 +20,10 @@ interface GetEntitlementItemOutput extends DocumentClient.GetItemOutput {
 type GetEntitlementQuery = PromiseResult<GetEntitlementItemOutput, AWSError>;
 
 export const saveEntitlement = (entitlement: EntitlementInterface) =>
-    dynamoDb.put({ TableName: Table.EntitlementsTable.tableName, Item: entitlement }).promise();
+    dynamoDbClient.put({ TableName: Table.EntitlementsTable.tableName, Item: entitlement }).promise();
 
 export const getEntitlementById = (entitlementId: string) =>
-    dynamoDb.get({ TableName: Table.EntitlementsTable.tableName, Key: { entitlementId } }).promise() as Promise<GetEntitlementQuery>;
+    dynamoDbClient.get({ TableName: Table.EntitlementsTable.tableName, Key: { entitlementId } }).promise() as Promise<GetEntitlementQuery>;
 
 type EntitlementUpdateArgInterface = Pick<EntitlementInterface, 'entitlementId'> & Partial<EntitlementInterface>;
 
@@ -41,7 +41,7 @@ export const updateEntitlement = (
 
     const UpdateExpression = [!!setActions && `SET ${setActions}`].join(' ');
 
-    return dynamoDb
+    return dynamoDbClient
         .update({
             TableName: Table.EntitlementsTable.tableName,
             Key: { entitlementId: entitlementUpdateArg.entitlementId },

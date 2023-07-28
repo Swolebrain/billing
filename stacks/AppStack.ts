@@ -47,6 +47,7 @@ export function API({ stack }: StackContext) {
         routes: {
             'GET /': 'packages/functions/src/index.helloWorld',
             'POST /webhook': 'packages/functions/src/events.eventsHandler',
+            'POST /checkout/initiate': 'packages/functions/src/checkout.checkoutInitiate'
         },
     });
 

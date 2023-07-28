@@ -4,9 +4,9 @@ import {
     handleProductCreatedEvent,
     handleProductUpdatedEvent,
 } from '@billing/core/services/entitlements';
+import { stripeClient } from '@billing/core/integrations';
 import { ApiHandler } from 'sst/node/api';
 import { Config } from 'sst/node/config';
-import Stripe from 'stripe';
 
 const productEvents = ['product.created', 'product.deleted', 'product.updated'] as const;
 type ProductEvent = (typeof productEvents)[number];
@@ -33,9 +33,6 @@ export const eventsHandler = ApiHandler(async (apiEvent) => {
     if (!stripeWebhookSignature) return { statusCode: 403 };
 
     try {
-        const stripeSecretKey = Config.STRIPE_SECRET_KEY;
-        const stripeClient = new Stripe(stripeSecretKey, { apiVersion: '2022-11-15' });
-
         const stripeWebhookSecret = Config.STRIPE_WEBHOOK_SECRET;
         const stripeEvent = stripeClient.webhooks.constructEvent(apiEvent.body, stripeWebhookSignature, stripeWebhookSecret);
 
