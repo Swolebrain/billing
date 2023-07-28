@@ -3,8 +3,11 @@ import { Api, Config, StackContext, Table } from 'sst/constructs';
 
 export function API({ stack }: StackContext) {
     const membershipsTable = new Table(stack, `MembershipsTable`, {
-        fields: { userId: 'string' },
+        fields: { userId: 'string', linkedStripeCustomerId: 'string' },
         primaryIndex: { partitionKey: 'userId' },
+        globalIndexes: {
+            linkedStripeCustomerId: { partitionKey: 'linkedStripeCustomerId' },
+        },
         cdk: {
             table: {
                 removalPolicy: RemovalPolicy.DESTROY,
@@ -47,7 +50,7 @@ export function API({ stack }: StackContext) {
         routes: {
             'GET /': 'packages/functions/src/index.helloWorld',
             'POST /webhook': 'packages/functions/src/events.eventsHandler',
-            'POST /checkout/initiate': 'packages/functions/src/checkout.checkoutInitiate'
+            'POST /checkout/initiate': 'packages/functions/src/checkout.checkoutInitiate',
         },
     });
 

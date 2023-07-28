@@ -14,7 +14,7 @@ type ProductEvent = (typeof productEvents)[number];
 const priceEvents = ['price.created', 'price.deleted', 'price.updated'] as const;
 type PriceEvent = (typeof priceEvents)[number];
 
-const subscriptionEvents = [
+const customerSubscriptionEvents = [
     'customer.subscription.created',
     'customer.subscription.deleted',
     'customer.subscription.paused',
@@ -22,9 +22,9 @@ const subscriptionEvents = [
     'customer.subscription.trial_will_end',
     'customer.subscription.updated',
 ] as const;
-type SubscriptionEvent = (typeof subscriptionEvents)[number];
+type CustomerSubscriptionEvent = (typeof customerSubscriptionEvents)[number];
 
-type StripeEvent = ProductEvent | PriceEvent | SubscriptionEvent;
+type StripeEvent = ProductEvent | PriceEvent | CustomerSubscriptionEvent;
 
 export const eventsHandler = ApiHandler(async (apiEvent) => {
     if (!apiEvent.body) return { statusCode: 400 };
@@ -51,6 +51,9 @@ export const eventsHandler = ApiHandler(async (apiEvent) => {
             }
             case 'price.updated': {
                 handlePriceUpdatedEvent(stripeEvent);
+                break;
+            }
+            case 'customer.subscription.created': {
                 break;
             }
             default:

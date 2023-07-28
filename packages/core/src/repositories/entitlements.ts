@@ -19,11 +19,11 @@ interface GetEntitlementItemOutput extends DocumentClient.GetItemOutput {
 
 type GetEntitlementQuery = PromiseResult<GetEntitlementItemOutput, AWSError>;
 
-export const saveEntitlement = (entitlement: EntitlementInterface) =>
-    dynamoDbClient.put({ TableName: Table.EntitlementsTable.tableName, Item: entitlement }).promise();
-
 export const getEntitlementById = (entitlementId: string) =>
     dynamoDbClient.get({ TableName: Table.EntitlementsTable.tableName, Key: { entitlementId } }).promise() as Promise<GetEntitlementQuery>;
+
+export const saveEntitlement = (entitlement: EntitlementInterface) =>
+    dynamoDbClient.put({ TableName: Table.EntitlementsTable.tableName, Item: entitlement }).promise();
 
 type EntitlementUpdateArgInterface = Pick<EntitlementInterface, 'entitlementId'> & Partial<EntitlementInterface>;
 

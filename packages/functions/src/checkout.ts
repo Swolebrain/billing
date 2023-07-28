@@ -1,7 +1,7 @@
 import { stripeClient } from '@billing/core/integrations';
 import { getEntitlementById } from '@billing/core/repositories/entitlements';
 import { MembershipInterface } from '@billing/core/repositories/memberships';
-import { getOrCreateMembership } from '@billing/core/services/memberships';
+import { getOrCreateMembershipForCheckout } from '@billing/core/services/memberships';
 import { ApiHandler } from 'sst/node/api';
 
 interface CheckoutInitiateBody {
@@ -18,7 +18,7 @@ export const checkoutInitiate = ApiHandler(async (apiEvent, ctx) => {
         const body: CheckoutInitiateBody = JSON.parse(apiEvent.body);
 
         const [membership, entitlementsQueryResult] = await Promise.all([
-            getOrCreateMembership(body.userId).then((result) => result as MembershipInterface),
+            getOrCreateMembershipForCheckout(body.userId).then((result) => result as MembershipInterface),
             Promise.all(body.items.map(({ entitlementId }) => getEntitlementById(entitlementId))),
         ]);
 

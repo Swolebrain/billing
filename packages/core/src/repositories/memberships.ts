@@ -21,10 +21,17 @@ interface GetMembershipItemOutput extends DocumentClient.GetItemOutput {
 type GetMembershipQuery = PromiseResult<GetMembershipItemOutput, AWSError>;
 
 export const getMembershipByUserId = async (userId: string) =>
+    dynamoDbClient.get({ TableName: Table.MembershipsTable.tableName, Key: { userId } }).promise() as Promise<GetMembershipQuery>;
+
+export const getMembershipByStripeCustomerId = async (stripeCustomerId: string) =>
     dynamoDbClient
-        .get({
+        .query({
             TableName: Table.MembershipsTable.tableName,
-            Key: { userId },
+            IndexName: 'linkedStripeCustomerId',
+            KeyConditionExpression: 'linkedStripeCustomerId=:stripeCustomerId',
+            ExpressionAttributeValues: {
+                ':stripeCustomerId': stripeCustomerId,
+            },
         })
         .promise() as Promise<GetMembershipQuery>;
 
@@ -35,3 +42,36 @@ export const saveMembership = async (membership: MembershipInterface) =>
             Item: membership,
         })
         .promise();
+
+type MembershipUpdatedDataInterface = Pick<MembershipInterface, 'userId'> & Partial<MembershipInterface>;
+
+export const updateMembership = async (membershipUpdatedData: MembershipUpdatedDataInterface) => {
+    const setActions = [
+        typeof membershipUpdatedData.status === 'string' && 'status=:status',
+        Array.isArray(membershipUpdatedData.entitlementIds) && 'entitlementIds=:entitlementIds',
+        typeof membershipUpdatedData.linkedStripeCustomerId === 'string' && 'linkedStripeCustomerId=:linkedStripeCustomerId',
+        typeof membershipUpdatedData.linkedStripeSubscriptionId === 'string' && 'linkedStripeSubscriptionId=:linkedStripeSubscriptionId',
+        typeof membershipUpdatedData.lastPaymentDate === 'number' && 'lastPaymentDate=:lastPaymentDate',
+        typeof membershipUpdatedData.nextPaymentDate === 'number' && 'nextPaymentDate=:nextPaymentDate',
+    ]
+        .filter((value): value is string => !!value)
+        .join(', ');
+
+    const UpdateExpression = [!!setActions && `SET ${setActions}`].join(' ');
+
+    return dynamoDbClient
+        .update({
+            TableName: Table.EntitlementsTable.tableName,
+            Key: { userId: membershipUpdatedData.userId },
+            UpdateExpression,
+            ExpressionAttributeValues: {
+                ':status': membershipUpdatedData.status,
+                ':entitlementIds': membershipUpdatedData.entitlementIds,
+                ':linkedStripeCustomerId': membershipUpdatedData.linkedStripeCustomerId,
+                ':linkedStripeSubscriptionId': membershipUpdatedData.linkedStripeSubscriptionId,
+                ':lastPaymentDate': membershipUpdatedData.lastPaymentDate,
+                ':nextPaymentDate': membershipUpdatedData.nextPaymentDate,
+            },
+        })
+        .promise();
+};
