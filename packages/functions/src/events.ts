@@ -1,4 +1,9 @@
-import { handleProductCreatedEvent, handleProductUpdatedEvent } from '@billing/core/services/entitlements';
+import {
+    handlePriceCreatedEvent,
+    handlePriceUpdatedEvent,
+    handleProductCreatedEvent,
+    handleProductUpdatedEvent,
+} from '@billing/core/services/entitlements';
 import { ApiHandler } from 'sst/node/api';
 import { Config } from 'sst/node/config';
 import Stripe from 'stripe';
@@ -41,6 +46,14 @@ export const eventsHandler = ApiHandler(async (apiEvent) => {
             }
             case 'product.updated': {
                 handleProductUpdatedEvent(stripeEvent);
+                break;
+            }
+            case 'price.created': {
+                handlePriceCreatedEvent(stripeEvent);
+                break;
+            }
+            case 'price.updated': {
+                handlePriceUpdatedEvent(stripeEvent);
                 break;
             }
             default:

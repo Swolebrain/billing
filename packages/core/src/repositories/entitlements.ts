@@ -25,24 +25,27 @@ export const saveEntitlement = (entitlement: EntitlementInterface) =>
 export const getEntitlementById = (entitlementId: string) =>
     dynamoDb.get({ TableName: Table.EntitlementsTable.tableName, Key: { entitlementId } }).promise() as Promise<GetEntitlementQuery>;
 
-type EntitlementUpdateArgInterface = Pick<EntitlementInterface, 'entitlementId'> &
-    Partial<Omit<EntitlementInterface, 'linkedStripeActivePriceIds'>>;
+type EntitlementUpdateArgInterface = Pick<EntitlementInterface, 'entitlementId'> & Partial<EntitlementInterface>;
 
-export const updateEntitlement = (entitlementUpdateArg: EntitlementUpdateArgInterface) => {
+export const updateEntitlement = (
+    entitlementUpdateArg: EntitlementUpdateArgInterface
+): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>> => {
     const setActions = [
         entitlementUpdateArg.name && 'name=:name',
         entitlementUpdateArg.description && 'description=:description',
-        entitlementUpdateArg.linkedStripePrices && 'linkedStripeActivePrices=:prices',
+        entitlementUpdateArg.linkedStripePrices && 'linkedStripePrices=:prices',
         typeof entitlementUpdateArg.active === 'boolean' && 'active=:active',
     ]
         .filter((value): value is string => !!value)
         .join(', ');
 
+    const UpdateExpression = [!!setActions && `SET ${setActions}`].join(' ');
+
     return dynamoDb
         .update({
             TableName: Table.EntitlementsTable.tableName,
             Key: { entitlementId: entitlementUpdateArg.entitlementId },
-            UpdateExpression: [!!setActions && `SET ${setActions}`].join(' '),
+            UpdateExpression,
             ExpressionAttributeValues: {
                 ':name': entitlementUpdateArg.name,
                 ':description': entitlementUpdateArg.description,

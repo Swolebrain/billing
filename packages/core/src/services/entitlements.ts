@@ -46,10 +46,58 @@ export const handleProductUpdatedEvent = async (stripeEvent: Stripe.Event) => {
         return;
     }
 
-    const entitlementMutation = await updateEntitlement({ ...updatedEntitlementValues, entitlementId: result.Item.entitlementId });
+    const entitlementMutationResult = await updateEntitlement({ ...updatedEntitlementValues, entitlementId: result.Item.entitlementId });
 
-    if (entitlementMutation.$response.error) {
+    if (entitlementMutationResult.$response.error) {
         // Handle Error Logic
+        return;
+    }
+};
+
+export const handlePriceCreatedEvent = async (stripeEvent: Stripe.Event) => {
+    const price = stripeEvent.data.object as Stripe.Price;
+    const entitlementQueryResult = await getEntitlementById(typeof price.product === 'string' ? price.product : price.product.id);
+
+    if (entitlementQueryResult.$response.error) {
+        return;
+    }
+
+    if (!entitlementQueryResult.Item) {
+        return;
+    }
+
+    const entitlement = entitlementQueryResult.Item;
+    const entitlementMutationResult = await updateEntitlement({
+        entitlementId: entitlement.entitlementId,
+        linkedStripePrices: [...entitlement.linkedStripePrices, { priceId: price.id, active: price.active }],
+    });
+
+    if (entitlementMutationResult.$response.error) {
+        return;
+    }
+};
+
+export const handlePriceUpdatedEvent = async (stripeEvent: Stripe.Event) => {
+    const price = stripeEvent.data.object as Stripe.Price;
+    const entitlementQueryResult = await getEntitlementById(typeof price.product === 'string' ? price.product : price.product.id);
+
+    if (entitlementQueryResult.$response.error) {
+        return;
+    }
+
+    if (!entitlementQueryResult.Item) {
+        return;
+    }
+
+    const entitlement = entitlementQueryResult.Item;
+    const entitlementMutationResult = await updateEntitlement({
+        entitlementId: entitlement.entitlementId,
+        linkedStripePrices: entitlement.linkedStripePrices.map((linkedStripePrice) =>
+            linkedStripePrice.priceId === price.id ? { ...linkedStripePrice, active: price.active } : linkedStripePrice
+        ),
+    });
+
+    if (entitlementMutationResult.$response.error) {
         return;
     }
 };
