@@ -20,6 +20,12 @@ interface GetMembershipItemOutput extends DocumentClient.GetItemOutput {
 
 type GetMembershipQuery = PromiseResult<GetMembershipItemOutput, AWSError>;
 
+interface GetMultipleMembershipItemOutput extends DocumentClient.GetItemOutput {
+    Items: MembershipInterface[];
+}
+
+type GetMultipleMembershipsQuery = PromiseResult<GetMultipleMembershipItemOutput, AWSError>;
+
 export const getMembershipByUserId = async (userId: string) =>
     dynamoDbClient.get({ TableName: Table.MembershipsTable.tableName, Key: { userId } }).promise() as Promise<GetMembershipQuery>;
 
@@ -33,7 +39,7 @@ export const getMembershipByStripeCustomerId = async (stripeCustomerId: string) 
                 ':stripeCustomerId': stripeCustomerId,
             },
         })
-        .promise() as Promise<GetMembershipQuery>;
+        .promise() as Promise<GetMultipleMembershipsQuery>;
 
 export const saveMembership = async (membership: MembershipInterface) =>
     dynamoDbClient
@@ -47,7 +53,7 @@ type MembershipUpdatedDataInterface = Pick<MembershipInterface, 'userId'> & Part
 
 export const updateMembership = async (membershipUpdatedData: MembershipUpdatedDataInterface) => {
     const setActions = [
-        typeof membershipUpdatedData.status === 'string' && 'status=:status',
+        typeof membershipUpdatedData.status === 'string' && '#status=:status',
         Array.isArray(membershipUpdatedData.entitlementIds) && 'entitlementIds=:entitlementIds',
         typeof membershipUpdatedData.linkedStripeCustomerId === 'string' && 'linkedStripeCustomerId=:linkedStripeCustomerId',
         typeof membershipUpdatedData.linkedStripeSubscriptionId === 'string' && 'linkedStripeSubscriptionId=:linkedStripeSubscriptionId',
@@ -61,7 +67,7 @@ export const updateMembership = async (membershipUpdatedData: MembershipUpdatedD
 
     return dynamoDbClient
         .update({
-            TableName: Table.EntitlementsTable.tableName,
+            TableName: Table.MembershipsTable.tableName,
             Key: { userId: membershipUpdatedData.userId },
             UpdateExpression,
             ExpressionAttributeValues: {
@@ -71,6 +77,9 @@ export const updateMembership = async (membershipUpdatedData: MembershipUpdatedD
                 ':linkedStripeSubscriptionId': membershipUpdatedData.linkedStripeSubscriptionId,
                 ':lastPaymentDate': membershipUpdatedData.lastPaymentDate,
                 ':nextPaymentDate': membershipUpdatedData.nextPaymentDate,
+            },
+            ExpressionAttributeNames: {
+                '#status': 'status',
             },
         })
         .promise();

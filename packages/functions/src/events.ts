@@ -7,6 +7,7 @@ import {
 import { stripeClient } from '@billing/core/integrations';
 import { ApiHandler } from 'sst/node/api';
 import { Config } from 'sst/node/config';
+import { handleCustomerSubscriptionCreatedEvent } from '@billing/core/services/memberships';
 
 const productEvents = ['product.created', 'product.deleted', 'product.updated'] as const;
 type ProductEvent = (typeof productEvents)[number];
@@ -54,6 +55,7 @@ export const eventsHandler = ApiHandler(async (apiEvent) => {
                 break;
             }
             case 'customer.subscription.created': {
+                handleCustomerSubscriptionCreatedEvent(stripeEvent);
                 break;
             }
             default:

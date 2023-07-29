@@ -56,7 +56,8 @@ export const handleCustomerSubscriptionCreatedEvent = async (stripeEvent: Stripe
         return;
     }
 
-    const membership = membershipQueryResult.Item;
+    const [membership] = membershipQueryResult.Items;
+
     if (!membership) {
         return;
     }
@@ -64,7 +65,7 @@ export const handleCustomerSubscriptionCreatedEvent = async (stripeEvent: Stripe
     const membershipMutationResult = await updateMembership({
         userId: membership.userId,
         status: subscription.status,
-        entitlementIds: subscription.items.data.map(({ id }) => id),
+        entitlementIds: subscription.items.data.map(({ price }) => (typeof price.product === 'string' ? price.product : price.product.id)),
         linkedStripeSubscriptionId: subscription.id,
         lastPaymentDate: subscription.current_period_start,
         nextPaymentDate: subscription.current_period_end,
