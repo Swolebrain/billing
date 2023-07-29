@@ -29,7 +29,7 @@ export const getOrCreateMembershipForCheckout = async (userId: string): Promise<
     const stripeCustomer = await stripeClient.customers.create();
     const membershipToCreate = {
         userId,
-        entitlementIds: [],
+        entitlements: [],
         linkedStripeCustomerId: stripeCustomer.id,
         status: 'INACTIVE',
         linkedStripeSubscriptionId: null,
@@ -65,7 +65,10 @@ export const handleCustomerSubscriptionCreatedEvent = async (stripeEvent: Stripe
     const membershipMutationResult = await updateMembership({
         userId: membership.userId,
         status: subscription.status,
-        entitlementIds: subscription.items.data.map(({ price }) => (typeof price.product === 'string' ? price.product : price.product.id)),
+        entitlements: subscription.items.data.map(({ id, price }) => ({
+            entitlementId: typeof price.product === 'string' ? price.product : price.product.id,
+            stripeSubscriptionItemId: id,
+        })),
         linkedStripeSubscriptionId: subscription.id,
         lastPaymentDate: subscription.current_period_start,
         nextPaymentDate: subscription.current_period_end,

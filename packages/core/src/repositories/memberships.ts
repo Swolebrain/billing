@@ -7,7 +7,7 @@ import { Table } from 'sst/node/table';
 export interface MembershipInterface {
     userId: string;
     status: string;
-    entitlementIds: string[];
+    entitlements: { entitlementId: string; stripeSubscriptionItemId: string }[];
     linkedStripeCustomerId: string;
     linkedStripeSubscriptionId?: string | null;
     lastPaymentDate?: number | null;
@@ -54,7 +54,7 @@ type MembershipUpdatedDataInterface = Pick<MembershipInterface, 'userId'> & Part
 export const updateMembership = async (membershipUpdatedData: MembershipUpdatedDataInterface) => {
     const setActions = [
         typeof membershipUpdatedData.status === 'string' && '#status=:status',
-        Array.isArray(membershipUpdatedData.entitlementIds) && 'entitlementIds=:entitlementIds',
+        Array.isArray(membershipUpdatedData.entitlements) && 'entitlements=:entitlements',
         typeof membershipUpdatedData.linkedStripeCustomerId === 'string' && 'linkedStripeCustomerId=:linkedStripeCustomerId',
         typeof membershipUpdatedData.linkedStripeSubscriptionId === 'string' && 'linkedStripeSubscriptionId=:linkedStripeSubscriptionId',
         typeof membershipUpdatedData.lastPaymentDate === 'number' && 'lastPaymentDate=:lastPaymentDate',
@@ -72,7 +72,7 @@ export const updateMembership = async (membershipUpdatedData: MembershipUpdatedD
             UpdateExpression,
             ExpressionAttributeValues: {
                 ':status': membershipUpdatedData.status,
-                ':entitlementIds': membershipUpdatedData.entitlementIds,
+                ':entitlements': membershipUpdatedData.entitlements,
                 ':linkedStripeCustomerId': membershipUpdatedData.linkedStripeCustomerId,
                 ':linkedStripeSubscriptionId': membershipUpdatedData.linkedStripeSubscriptionId,
                 ':lastPaymentDate': membershipUpdatedData.lastPaymentDate,
