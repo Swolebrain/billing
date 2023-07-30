@@ -36,3 +36,36 @@ export const reportUsageRecord = ApiHandler(async (apiEvent, ctx) => {
         return { statusCode: 500 };
     }
 });
+
+export const requestEntitlementAccess = ApiHandler(async (apiEvent, ctx) => {
+    const pathParameters = apiEvent.pathParameters;
+    if (!pathParameters || ['userId', 'entitlementId'].some((key) => typeof pathParameters[key] === 'undefined')) {
+        return { statusCode: 400 };
+    }
+
+    const { userId, entitlementId } = pathParameters as { userId: string; entitlementId: string };
+
+    try {
+        const membershipQueryResult = await getMembershipByUserId(userId);
+        if (membershipQueryResult.$response.error) {
+            return { statusCode: 503 };
+        }
+
+        const membership = membershipQueryResult.Item;
+        if (!membership) {
+            return { statusCode: 403 };
+        }
+
+        const selectedEntitlement = membership.entitlements.find(
+            (membershipEntitlement) => membershipEntitlement.entitlementId === entitlementId
+        );
+        if (!selectedEntitlement?.linkedStripeSubscriptionItemId) {
+            return { statusCode: 403 };
+        }
+
+        return { statusCode: 200 };
+    } catch (err) {
+        console.log({ err });
+        return { statusCode: 500 };
+    }
+});

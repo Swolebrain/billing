@@ -52,6 +52,7 @@ export function API({ stack }: StackContext) {
             'POST /webhook': 'packages/functions/src/events.eventsHandler',
             'POST /checkout/initiate': 'packages/functions/src/checkout.checkoutInitiate',
             'POST /memberships/{userId}/usage/{entitlementId}': 'packages/functions/src/memberships.reportUsageRecord',
+            'GET /memberships/{userId}/authorize/{entitlementId}': 'packages/functions/src/memberships.requestEntitlementAccess',
         },
     });
 
