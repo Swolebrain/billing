@@ -1,4 +1,5 @@
 import { getMembershipByUserId } from '@billing/core/repositories/memberships';
+import { createCustomerPortalSession } from '@billing/core/services/memberships';
 import { reportUsage } from '@billing/core/services/usage-records';
 import { ApiHandler } from 'sst/node/api';
 
@@ -64,6 +65,24 @@ export const requestEntitlementAccess = ApiHandler(async (apiEvent, ctx) => {
         }
 
         return { statusCode: 200 };
+    } catch (err) {
+        console.log({ err });
+        return { statusCode: 500 };
+    }
+});
+
+export const requestCustomerPortalSession = ApiHandler(async (apiEvent, ctx) => {
+    const pathParameters = apiEvent.pathParameters;
+    if (!pathParameters || ['userId'].some((key) => typeof pathParameters[key] === 'undefined')) {
+        return { statusCode: 400 };
+    }
+
+    const { userId } = pathParameters as { userId: string };
+
+    try {
+        const customerPortalSession = await createCustomerPortalSession(userId);
+
+        return { statusCode: 200, body: JSON.stringify({ customerPortalSession }) };
     } catch (err) {
         console.log({ err });
         return { statusCode: 500 };

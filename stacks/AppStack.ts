@@ -53,6 +53,7 @@ export function API({ stack }: StackContext) {
             'POST /checkout/initiate': 'packages/functions/src/checkout.checkoutInitiate',
             'POST /memberships/{userId}/usage/{entitlementId}': 'packages/functions/src/memberships.reportUsageRecord',
             'GET /memberships/{userId}/authorize/{entitlementId}': 'packages/functions/src/memberships.requestEntitlementAccess',
+            'POST /memberships/{userId}/customer-portal-session': 'packages/functions/src/memberships.requestCustomerPortalSession',
         },
     });
 

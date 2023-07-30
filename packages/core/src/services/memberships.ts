@@ -78,3 +78,22 @@ export const handleCustomerSubscriptionCreatedEvent = async (stripeEvent: Stripe
         return;
     }
 };
+
+export const createCustomerPortalSession = async (userId: string) => {
+    const membershipQueryResult = await getMembershipByUserId(userId);
+
+    if (membershipQueryResult.$response.error) {
+        // Handle Error
+        throw new Error();
+    }
+
+    const membership = membershipQueryResult.Item;
+    if (!membership) {
+        // Handle Error
+        throw new Error();
+    }
+
+    return stripeClient.billingPortal.sessions.create({
+        customer: membership.linkedStripeCustomerId,
+    }) as Promise<Stripe.BillingPortal.Session>;
+};
