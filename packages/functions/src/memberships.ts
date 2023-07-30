@@ -20,13 +20,13 @@ export const reportUsageRecord = ApiHandler(async (apiEvent, ctx) => {
 
         const membership = membershipQueryResult.Item;
         if (!membership) {
-            return { statusCode: 404 };
+            return { statusCode: 403 };
         }
 
         const selectedEntitlement = membership.entitlements.find(
             (membershipEntitlement) => membershipEntitlement.entitlementId === entitlementId
         );
-        if (!selectedEntitlement?.stripeSubscriptionItemId) {
+        if (!selectedEntitlement?.linkedStripeSubscriptionItemId) {
             return { statusCode: 500 };
         }
 

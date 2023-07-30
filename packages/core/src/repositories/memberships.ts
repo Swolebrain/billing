@@ -7,7 +7,7 @@ import { Table } from 'sst/node/table';
 export interface MembershipInterface {
     userId: string;
     status: string;
-    entitlements: { entitlementId: string; stripeSubscriptionItemId: string }[];
+    entitlements: { entitlementId: string; linkedStripeSubscriptionItemId: string }[];
     linkedStripeCustomerId: string;
     linkedStripeSubscriptionId?: string | null;
     lastPaymentDate?: number | null;

@@ -67,7 +67,7 @@ export const handleCustomerSubscriptionCreatedEvent = async (stripeEvent: Stripe
         status: subscription.status,
         entitlements: subscription.items.data.map(({ id, price }) => ({
             entitlementId: typeof price.product === 'string' ? price.product : price.product.id,
-            stripeSubscriptionItemId: id,
+            linkedStripeSubscriptionItemId: id,
         })),
         linkedStripeSubscriptionId: subscription.id,
         lastPaymentDate: subscription.current_period_start,

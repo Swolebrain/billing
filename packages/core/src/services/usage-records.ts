@@ -1,4 +1,5 @@
 import { stripeClient } from 'src/integrations';
+import { MembershipInterface } from 'src/repositories/memberships';
 import { saveUsageRecord } from 'src/repositories/usage-records';
 
 export const reportUsage = async ({
@@ -7,14 +8,15 @@ export const reportUsage = async ({
     quantity,
 }: {
     userId: string;
-    selectedEntitlement: { entitlementId: string; stripeSubscriptionItemId: string };
+    selectedEntitlement: MembershipInterface['entitlements'][number];
     quantity: number;
 }) => {
     const insertedToDynamoDbAt = Date.now();
 
-    const stripeUsageRecordResponse = await stripeClient.subscriptionItems.createUsageRecord(selectedEntitlement.stripeSubscriptionItemId, {
-        quantity,
-    });
+    const stripeUsageRecordResponse = await stripeClient.subscriptionItems.createUsageRecord(
+        selectedEntitlement.linkedStripeSubscriptionItemId,
+        { quantity }
+    );
 
     const saveUsageRecordResult = await saveUsageRecord({
         userId: userId,
@@ -22,7 +24,7 @@ export const reportUsage = async ({
         entitlementId: selectedEntitlement.entitlementId,
         quantity,
         linkedStripeProductId: selectedEntitlement.entitlementId,
-        linkedStripeSubscriptionItemId: selectedEntitlement.stripeSubscriptionItemId,
+        linkedStripeSubscriptionItemId: selectedEntitlement.linkedStripeSubscriptionItemId,
         linkedStripeUsageRecordId: stripeUsageRecordResponse.id,
         linkedStripeUsageRecordTimestamp: Date.now(),
     });
