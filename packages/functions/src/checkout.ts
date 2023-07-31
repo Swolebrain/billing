@@ -26,10 +26,32 @@ export const checkoutInitiate = ApiHandler(async (apiEvent, ctx) => {
             return { statusCode: 404 };
         }
 
+        const entitlementsById = Object.fromEntries(
+            entitlementsQueryResult.map(({ Item }) => [
+                Item.entitlementId,
+                {
+                    ...Item,
+                    linkedStripePricesById: Object.fromEntries(
+                        Item.linkedStripePrices.map((stripePrice) => [stripePrice.priceId, stripePrice])
+                    ),
+                },
+            ])
+        );
+
         const checkoutSession = await stripeClient.checkout.sessions.create({
             customer: membership.linkedStripeCustomerId,
-            line_items: body.items.map(({ linkedStripePriceId }) => ({ price: linkedStripePriceId })),
-            mode: 'subscription',
+            line_items: body.items.map(({ entitlementId, linkedStripePriceId }) => ({
+                price: linkedStripePriceId,
+                quantity: entitlementsById[entitlementId].linkedStripePricesById[linkedStripePriceId].type === 'one_time' ? 1 : undefined,
+            })),
+            mode: body.items
+                .map(
+                    ({ entitlementId, linkedStripePriceId }) =>
+                        entitlementsById[entitlementId].linkedStripePricesById[linkedStripePriceId].type
+                )
+                .some((priceType) => priceType !== 'one_time')
+                ? 'subscription'
+                : 'payment',
             success_url: body.successUrl,
             cancel_url: body.cancelUrl,
         });

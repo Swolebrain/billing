@@ -54,12 +54,12 @@ type MembershipUpdatedDataInterface = Pick<MembershipInterface, 'userId'> & Part
 
 export const updateMembership = async (membershipUpdatedData: MembershipUpdatedDataInterface) => {
     const setActions = [
-        typeof membershipUpdatedData.status === 'string' && '#status=:status',
-        Array.isArray(membershipUpdatedData.entitlements) && 'entitlements=:entitlements',
-        typeof membershipUpdatedData.linkedStripeCustomerId === 'string' && 'linkedStripeCustomerId=:linkedStripeCustomerId',
-        typeof membershipUpdatedData.linkedStripeSubscriptionId === 'string' && 'linkedStripeSubscriptionId=:linkedStripeSubscriptionId',
-        typeof membershipUpdatedData.lastPaymentDate === 'number' && 'lastPaymentDate=:lastPaymentDate',
-        typeof membershipUpdatedData.nextPaymentDate === 'number' && 'nextPaymentDate=:nextPaymentDate',
+        typeof membershipUpdatedData.status !== 'undefined' && '#status=:status',
+        typeof membershipUpdatedData.entitlements !== 'undefined' && 'entitlements=:entitlements',
+        typeof membershipUpdatedData.linkedStripeCustomerId !== 'undefined' && 'linkedStripeCustomerId=:linkedStripeCustomerId',
+        typeof membershipUpdatedData.linkedStripeSubscriptionId !== 'undefined' && 'linkedStripeSubscriptionId=:linkedStripeSubscriptionId',
+        typeof membershipUpdatedData.lastPaymentDate !== 'undefined' && 'lastPaymentDate=:lastPaymentDate',
+        typeof membershipUpdatedData.nextPaymentDate !== 'undefined' && 'nextPaymentDate=:nextPaymentDate',
     ]
         .filter((value): value is string => !!value)
         .join(', ');
