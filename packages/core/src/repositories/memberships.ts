@@ -3,10 +3,11 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { dynamoDbClient } from 'src/integrations';
 import { Table } from 'sst/node/table';
+import Stripe from 'stripe';
 
 export interface MembershipInterface {
     userId: string;
-    status: string;
+    status: Stripe.Subscription.Status | 'pending_link' | 'unlinked';
     entitlements: { entitlementId: string; linkedStripeSubscriptionItemId: string }[];
     linkedStripeCustomerId: string;
     linkedStripeSubscriptionId?: string | null;

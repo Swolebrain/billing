@@ -17,8 +17,12 @@ export const getOrCreateMembershipForCheckout = async (userId: string): Promise<
     }
 
     const foundMembership = membershipQueryResult.Item;
-    if (!!foundMembership && !!foundMembership.linkedStripeSubscriptionId) {
-        // Handle Error
+    const isFoundMembershipLinked = !!foundMembership
+        ? foundMembership.status !== 'pending_link' && foundMembership.status !== 'unlinked'
+        : undefined;
+
+    // This will prevent users with linked subscriptions from creating checkout sessions
+    if (!!foundMembership && isFoundMembershipLinked) {
         throw new Error();
     }
 
@@ -27,11 +31,11 @@ export const getOrCreateMembershipForCheckout = async (userId: string): Promise<
     }
 
     const stripeCustomer = await stripeClient.customers.create();
-    const membershipToCreate = {
+    const membershipToCreate: MembershipInterface = {
         userId,
         entitlements: [],
         linkedStripeCustomerId: stripeCustomer.id,
-        status: 'INACTIVE',
+        status: 'pending_link',
         linkedStripeSubscriptionId: null,
         lastPaymentDate: null,
         nextPaymentDate: null,
@@ -39,7 +43,6 @@ export const getOrCreateMembershipForCheckout = async (userId: string): Promise<
     const saveResult = await saveMembership(membershipToCreate);
 
     if (saveResult.$response.error) {
-        // Handle error logic
         throw new Error();
     }
 
@@ -53,13 +56,13 @@ export const handleCustomerSubscriptionCreatedEvent = async (stripeEvent: Stripe
     const membershipQueryResult = await getMembershipByStripeCustomerId(stripeCustomerId);
 
     if (membershipQueryResult.$response.error) {
-        return;
+        throw new Error();
     }
 
     const [membership] = membershipQueryResult.Items;
 
     if (!membership) {
-        return;
+        throw new Error();
     }
 
     const membershipMutationResult = await updateMembership({
@@ -75,7 +78,41 @@ export const handleCustomerSubscriptionCreatedEvent = async (stripeEvent: Stripe
     });
 
     if (membershipMutationResult.$response.error) {
-        return;
+        throw new Error();
+    }
+};
+
+export const handleSubscriptionDeletedEvent = async (stripeEvent: Stripe.Event) => {
+    const subscription = stripeEvent.data.object as Stripe.Subscription;
+    const stripeCustomerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
+
+    const membershipQueryResult = await getMembershipByStripeCustomerId(stripeCustomerId);
+
+    if (membershipQueryResult.$response.error) {
+        throw new Error();
+    }
+
+    const [membership] = membershipQueryResult.Items;
+
+    if (!membership) {
+        throw new Error();
+    }
+
+    if (membership.linkedStripeSubscriptionId !== subscription.id) {
+        throw new Error();
+    }
+
+    const membershipMutationResult = await updateMembership({
+        userId: membership.userId,
+        status: 'unlinked',
+        entitlements: [],
+        linkedStripeSubscriptionId: null,
+        lastPaymentDate: null,
+        nextPaymentDate: null,
+    });
+
+    if (membershipMutationResult.$response.error) {
+        throw new Error();
     }
 };
 
