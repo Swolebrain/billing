@@ -3,6 +3,7 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
 import { dynamoDbClient } from 'src/integrations';
 import { Table } from 'sst/node/table';
+import Stripe from 'stripe';
 
 export interface EntitlementInterface {
     entitlementId: string;
@@ -10,7 +11,7 @@ export interface EntitlementInterface {
     description?: string | null;
     active: boolean;
     linkedStripeProductId: string;
-    linkedStripePrices: { priceId: string; active: boolean }[];
+    linkedStripePrices: { priceId: string; active: boolean; type: Stripe.Price.Type }[];
 }
 
 interface GetEntitlementItemOutput extends DocumentClient.GetItemOutput {
