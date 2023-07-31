@@ -35,11 +35,14 @@ export const handleProductUpdatedEvent = async (stripeEvent: Stripe.Event) => {
         return map;
     }, {} as Partial<EntitlementInterface>);
 
+    if (Object.keys(updatedEntitlementValues).length === 0) {
+        return;
+    }
+
     const result = await getEntitlementById(product.id);
 
     if (result.$response.error) {
-        // Handle Error Logic
-        return;
+        throw new Error();
     }
 
     if (!result.Item) {
@@ -49,8 +52,7 @@ export const handleProductUpdatedEvent = async (stripeEvent: Stripe.Event) => {
     const entitlementMutationResult = await updateEntitlement({ ...updatedEntitlementValues, entitlementId: result.Item.entitlementId });
 
     if (entitlementMutationResult.$response.error) {
-        // Handle Error Logic
-        return;
+        throw new Error();
     }
 };
 
@@ -69,7 +71,7 @@ export const handlePriceCreatedEvent = async (stripeEvent: Stripe.Event) => {
     const entitlement = entitlementQueryResult.Item;
     const entitlementMutationResult = await updateEntitlement({
         entitlementId: entitlement.entitlementId,
-        linkedStripePrices: [...entitlement.linkedStripePrices, { priceId: price.id, active: price.active }],
+        linkedStripePrices: [...entitlement.linkedStripePrices, { priceId: price.id, active: price.active, type: price.type }],
     });
 
     if (entitlementMutationResult.$response.error) {
