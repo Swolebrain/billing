@@ -5,7 +5,11 @@ import {
     handleProductCreatedEvent,
     handleProductUpdatedEvent,
 } from '@billing/core/services/entitlements';
-import { handleCustomerSubscriptionCreatedEvent, handleSubscriptionDeletedEvent } from '@billing/core/services/memberships';
+import {
+    handleCheckoutSessionCompletedEvent,
+    handleCustomerSubscriptionCreatedEvent,
+    handleSubscriptionDeletedEvent,
+} from '@billing/core/services/memberships';
 import { ApiHandler } from 'sst/node/api';
 import { Config } from 'sst/node/config';
 
@@ -25,7 +29,14 @@ const customerSubscriptionEvents = [
 ] as const;
 type CustomerSubscriptionEvent = (typeof customerSubscriptionEvents)[number];
 
-type StripeEvent = ProductEvent | PriceEvent | CustomerSubscriptionEvent;
+const checkoutSessionEvents = [
+    'checkout.session.completed',
+    'checkout.session.async_payment_succeeded',
+    'checkout.session.async_payment_failed',
+] as const;
+type CheckoutSessionEvents = (typeof checkoutSessionEvents)[number];
+
+type StripeEvent = ProductEvent | PriceEvent | CustomerSubscriptionEvent | CheckoutSessionEvents;
 
 export const eventsHandler = ApiHandler(async (apiEvent) => {
     if (!apiEvent.body) return { statusCode: 400 };
@@ -60,6 +71,10 @@ export const eventsHandler = ApiHandler(async (apiEvent) => {
             }
             case 'customer.subscription.deleted': {
                 handleSubscriptionDeletedEvent(stripeEvent);
+                break;
+            }
+            case 'checkout.session.completed': {
+                handleCheckoutSessionCompletedEvent(stripeEvent);
                 break;
             }
             default:

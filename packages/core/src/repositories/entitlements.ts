@@ -18,7 +18,7 @@ interface GetEntitlementItemOutput extends DocumentClient.GetItemOutput {
     Item: EntitlementInterface;
 }
 
-type GetEntitlementQuery = PromiseResult<GetEntitlementItemOutput, AWSError>;
+export type GetEntitlementQuery = PromiseResult<GetEntitlementItemOutput, AWSError>;
 
 export const getEntitlementById = (entitlementId: string) =>
     dynamoDbClient.get({ TableName: Table.EntitlementsTable.tableName, Key: { entitlementId } }).promise() as Promise<GetEntitlementQuery>;

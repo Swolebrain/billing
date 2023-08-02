@@ -5,10 +5,14 @@ import { dynamoDbClient } from 'src/integrations';
 import { Table } from 'sst/node/table';
 import Stripe from 'stripe';
 
+type MembershipEntitlementData =
+    | { entitlementId: string; linkedStripeSubscriptionItemId: string; linkedStripeCheckoutSessionLineItemId?: undefined }
+    | { entitlementId: string; linkedStripeSubscriptionItemId?: undefined; linkedStripeCheckoutSessionLineItemId: string };
+
 export interface MembershipInterface {
     userId: string;
     status: Stripe.Subscription.Status | 'pending_link' | 'unlinked';
-    entitlements: { entitlementId: string; linkedStripeSubscriptionItemId: string }[];
+    entitlements: MembershipEntitlementData[];
     linkedStripeCustomerId: string;
     linkedStripeSubscriptionId?: string | null;
     lastPaymentDate?: number | null;
