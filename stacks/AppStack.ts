@@ -1,7 +1,7 @@
 import { RemovalPolicy } from 'aws-cdk-lib/core';
 import { Api, Config, StackContext, Table } from 'sst/constructs';
 
-export function API({ stack }: StackContext) {
+export function API({ stack, app }: StackContext) {
     const membershipsTable = new Table(stack, `MembershipsTable`, {
         fields: { userId: 'string', linkedStripeCustomerId: 'string' },
         primaryIndex: { partitionKey: 'userId' },
@@ -37,10 +37,12 @@ export function API({ stack }: StackContext) {
 
     const STRIPE_SECRET_KEY = new Config.Secret(stack, 'STRIPE_SECRET_KEY');
     const STRIPE_WEBHOOK_SECRET = new Config.Secret(stack, 'STRIPE_WEBHOOK_SECRET');
+    const APP_NAME = new Config.Parameter(stack, 'APP_NAME', { value: app.name });
+    const APP_STAGE = new Config.Parameter(stack, 'APP_STAGE', { value: app.stage });
 
     stack.setDefaultFunctionProps({
         runtime: 'nodejs18.x',
-        bind: [membershipsTable, entitlementsTable, usageRecordsTable, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET],
+        bind: [membershipsTable, entitlementsTable, usageRecordsTable, APP_NAME, APP_STAGE, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET],
     });
 
     const api = new Api(stack, 'RestAPI', {

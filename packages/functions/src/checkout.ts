@@ -3,12 +3,17 @@ import { getEntitlementById } from '@billing/core/repositories/entitlements';
 import { MembershipInterface } from '@billing/core/repositories/memberships';
 import { getOrCreateMembershipForCheckout } from '@billing/core/services/memberships';
 import { ApiHandler } from 'sst/node/api';
+import Stripe from 'stripe';
 
-interface CheckoutInitiateBody {
+export interface CheckoutInitiateBody {
     userId: string;
     items: { entitlementId: string; linkedStripePriceId: string }[];
     successUrl: string;
     cancelUrl: string;
+}
+
+export interface CheckoutInitiateResponseBody {
+    checkoutSession: Stripe.Checkout.Session;
 }
 
 export const checkoutInitiate = ApiHandler(async (apiEvent, ctx) => {

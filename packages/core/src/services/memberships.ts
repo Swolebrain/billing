@@ -7,6 +7,7 @@ import {
     saveMembership,
     updateMembership,
 } from 'src/repositories/memberships';
+import { Config } from 'sst/node/config';
 import Stripe from 'stripe';
 
 export const getOrCreateMembershipForCheckout = async (userId: string): Promise<MembershipInterface> => {
@@ -17,7 +18,7 @@ export const getOrCreateMembershipForCheckout = async (userId: string): Promise<
     }
 
     const foundMembership = membershipQueryResult.Item;
-    const canLinkSubscription = !!foundMembership && ['unlinked', 'pending_link'].includes(foundMembership.status);
+    const canLinkSubscription = !!foundMembership ? ['unlinked', 'pending_link'].includes(foundMembership.status) : true;
 
     // This will prevent users with linked subscriptions from creating checkout sessions
     if (!canLinkSubscription) {
@@ -28,7 +29,14 @@ export const getOrCreateMembershipForCheckout = async (userId: string): Promise<
         return membershipQueryResult.Item;
     }
 
-    const stripeCustomer = await stripeClient.customers.create();
+    const stripeCustomer = await stripeClient.customers.create({
+        metadata: {
+            APP_NAME: Config.APP_NAME,
+            APP_STAGE: Config.APP_STAGE,
+            userId,
+        },
+    });
+
     const membershipToCreate: MembershipInterface = {
         userId,
         entitlements: [],

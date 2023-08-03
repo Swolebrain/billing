@@ -9,7 +9,8 @@ const sstConfig: SSTConfig = {
         };
     },
     stacks(app) {
-        app.stack(API);
+        if (app.mode === 'dev') app.setDefaultRemovalPolicy('destroy');
+        app.stack(API, { stackName: app.logicalPrefixedName('API') });
     },
 };
 
