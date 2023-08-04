@@ -1,14 +1,14 @@
-import { stripeClient } from 'src/integrations';
-import { getEntitlementById } from 'src/repositories/entitlements';
+import Stripe from 'stripe';
+import { stripeClient } from '../integrations';
+import { getEntitlementById } from '../repositories/entitlements';
 import {
     MembershipInterface,
     getMembershipByStripeCustomerId,
     getMembershipByUserId,
     saveMembership,
     updateMembership,
-} from 'src/repositories/memberships';
+} from '../repositories/memberships';
 import { Config } from 'sst/node/config';
-import Stripe from 'stripe';
 
 export const getOrCreateMembershipForCheckout = async (userId: string): Promise<MembershipInterface> => {
     const membershipQueryResult = await getMembershipByUserId(userId);

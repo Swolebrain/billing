@@ -1,5 +1,5 @@
-import { EntitlementInterface, getEntitlementById, saveEntitlement, updateEntitlement } from 'src/repositories/entitlements';
 import Stripe from 'stripe';
+import { saveEntitlement, EntitlementInterface, getEntitlementById, updateEntitlement } from '../repositories/entitlements';
 
 export const handleProductCreatedEvent = async (stripeEvent: Stripe.Event) => {
     const product = stripeEvent.data.object as Stripe.Product;

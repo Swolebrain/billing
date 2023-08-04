@@ -1,6 +1,6 @@
-import { stripeClient } from 'src/integrations';
-import { MembershipInterface } from 'src/repositories/memberships';
-import { saveUsageRecord } from 'src/repositories/usage-records';
+import { stripeClient } from '../integrations';
+import { MembershipInterface } from '../repositories/memberships';
+import { saveUsageRecord } from '../repositories/usage-records';
 
 export const reportUsage = async ({
     userId,
@@ -11,6 +11,8 @@ export const reportUsage = async ({
     selectedEntitlement: MembershipInterface['entitlements'][number];
     quantity: number;
 }) => {
+    if (!selectedEntitlement.linkedStripeSubscriptionItemId) return;
+
     const insertedToDynamoDbAt = Date.now();
 
     const stripeUsageRecordResponse = await stripeClient.subscriptionItems.createUsageRecord(

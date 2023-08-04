@@ -1,5 +1,5 @@
-import { dynamoDbClient } from 'src/integrations';
 import { Table } from 'sst/node/table';
+import { dynamoDbClient } from '../integrations';
 
 export interface UsageRecordInterface {
     userId: string;

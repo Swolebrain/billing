@@ -1,9 +1,9 @@
 import { AWSError } from 'aws-sdk';
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { PromiseResult } from 'aws-sdk/lib/request';
-import { dynamoDbClient } from 'src/integrations';
 import { Table } from 'sst/node/table';
 import Stripe from 'stripe';
+import { dynamoDbClient } from '../integrations';
 
 type MembershipEntitlementData =
     | { entitlementId: string; linkedStripeSubscriptionItemId: string; linkedStripeCheckoutSessionLineItemId?: undefined }
