@@ -32,7 +32,7 @@ export const updateEntitlement = (
     entitlementUpdateArg: EntitlementUpdateArgInterface
 ): Promise<PromiseResult<DocumentClient.UpdateItemOutput, AWSError>> => {
     const setActions = [
-        entitlementUpdateArg.name && 'name=:name',
+        entitlementUpdateArg.name && '#entitlement_name=:name',
         entitlementUpdateArg.description && 'description=:description',
         entitlementUpdateArg.linkedStripePrices && 'linkedStripePrices=:prices',
         typeof entitlementUpdateArg.active === 'boolean' && 'active=:active',
@@ -41,6 +41,10 @@ export const updateEntitlement = (
         .join(', ');
 
     const UpdateExpression = [!!setActions && `SET ${setActions}`].join(' ');
+
+    const dynamodbExpressionAttributeNames: { [key: string]: string } = {};
+
+    if (entitlementUpdateArg.name) dynamodbExpressionAttributeNames['#entitlement_name'] = 'name';
 
     return dynamoDbClient
         .update({
@@ -53,6 +57,8 @@ export const updateEntitlement = (
                 ':active': entitlementUpdateArg.active,
                 ':prices': entitlementUpdateArg.linkedStripePrices,
             },
+            ExpressionAttributeNames:
+                Object.keys(dynamodbExpressionAttributeNames).length > 0 ? dynamodbExpressionAttributeNames : undefined,
         })
         .promise();
 };

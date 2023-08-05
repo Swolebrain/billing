@@ -1,9 +1,8 @@
 import { stripeClient } from '@billing/core/integrations';
 import { deleteEntitlement, getEntitlementById } from '@billing/core/repositories/entitlements';
-import { Axios, isAxiosError } from 'axios';
 import Stripe from 'stripe';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { testStripeProductForPriceEvents, testStripeProductBaseData, testStripePriceBaseData } from '../data';
+import { testStripePriceBaseData, testStripeProductBaseData, testStripeProductForPriceEvents } from '../data';
 
 const sleep = (ms: number) =>
     new Promise((resolve) => {
@@ -87,6 +86,39 @@ describe('route: /webhooks', () => {
         expect(linkedEntitlement.name).toEqual(stripeProductCreated.name);
         expect(linkedEntitlement.description).toEqual(stripeProductCreated.description);
         expect(linkedEntitlement.linkedStripePrices.length).toEqual(0);
+    });
+
+    it('should upate entitlements after their linked products are updated', async () => {
+        if (!stripeProductCreated) throw new Error('Stripe product was not created for tests');
+
+        const stripeProductUpdatedData = {
+            name: 'STRIPE_TEST_PRODUCT_NAME_UPDATED',
+            description: 'STRIPE_TEST_PRODUCT_DESCRIPTION_UPDATED',
+        };
+
+        await stripeClient.products.update(stripeProductCreated.id, stripeProductUpdatedData);
+
+        await exponentialBackoff(
+            async () => {
+                if (!stripeProductCreated) throw new Error();
+
+                const entitlementQueryResult = await getEntitlementById(stripeProductCreated.id);
+
+                if (entitlementQueryResult.$response.error) {
+                    throw entitlementQueryResult.$response.error;
+                }
+
+                if (!entitlementQueryResult.Item) {
+                    throw new Error();
+                }
+
+                const linkedEntitlement = entitlementQueryResult.Item;
+
+                expect(linkedEntitlement.name).toEqual(stripeProductUpdatedData.name);
+                expect(linkedEntitlement.description).toEqual(stripeProductUpdatedData.description);
+            },
+            { delayMs: 5000, maxRetry: 2 }
+        );
     });
 
     it('should append price to entitlement upon price creation on Stripe', async () => {
