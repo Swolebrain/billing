@@ -56,3 +56,11 @@ export const updateEntitlement = (
         })
         .promise();
 };
+
+export const deleteEntitlement = async (entitlementId: string) =>
+    dynamoDbClient
+        .delete({
+            TableName: Table.EntitlementsTable.tableName,
+            Key: { entitlementId },
+        })
+        .promise();
