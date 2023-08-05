@@ -8,5 +8,6 @@ export default defineConfig({
             '@billing/core': path.resolve(__dirname, '..', 'core', 'src'),
         },
         testTimeout: 15 * 1000,
+        threads: false,
     },
 });
