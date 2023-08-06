@@ -130,7 +130,7 @@ describe('route: /webhooks', () => {
 
         await sleep(5000);
 
-        const linkedEntitlement = await exponentialBackoff(
+        await exponentialBackoff(
             async () => {
                 if (!stripeProductForPriceEvents) throw new Error('No product was created on Stripe during tests');
 
@@ -144,14 +144,52 @@ describe('route: /webhooks', () => {
                     throw new Error();
                 }
 
-                return entitlementQueryResult.Item;
+                const linkedEntitlement = entitlementQueryResult.Item;
+
+                expect(linkedEntitlement).toBeDefined();
+                expect(
+                    linkedEntitlement.linkedStripePrices.some((price) => !!price.priceId && price.priceId === stripePriceCreated?.id)
+                ).toEqual(true);
             },
             { delayMs: 5000, maxRetry: 2 }
         );
+    });
 
-        expect(linkedEntitlement).toBeDefined();
-        expect(linkedEntitlement.linkedStripePrices.some((price) => !!price.priceId && price.priceId === stripePriceCreated?.id)).toEqual(
-            true
+    it('should update price on entitlements upon price updates from stripe', async () => {
+        if (!stripeProductForPriceEvents) throw new Error('No product was created on Stripe for testing price events');
+        if (!stripePriceCreated) throw new Error();
+
+        const stripePriceUpdated = await stripeClient.prices.update(stripePriceCreated.id, { active: false });
+
+        if (!stripePriceUpdated) throw new Error('Could not update price on Stripe');
+
+        await sleep(5000);
+
+        await exponentialBackoff(
+            async () => {
+                if (!stripeProductForPriceEvents) throw new Error('No product was created on Stripe during tests');
+                if (!stripePriceUpdated) throw new Error('Could not update price on Stripe');
+
+                const entitlementQueryResult = await getEntitlementById(stripeProductForPriceEvents.id);
+
+                if (entitlementQueryResult.$response.error) {
+                    throw entitlementQueryResult.$response.error;
+                }
+
+                if (!entitlementQueryResult.Item) {
+                    throw new Error();
+                }
+
+                const linkedEntitlement = entitlementQueryResult.Item;
+
+                expect(linkedEntitlement).toBeDefined();
+                expect(
+                    linkedEntitlement.linkedStripePrices.some(
+                        (price) => !!price.priceId && price.priceId === stripePriceUpdated.id && price.active === stripePriceUpdated.active
+                    )
+                ).toEqual(true);
+            },
+            { delayMs: 5000, maxRetry: 2 }
         );
     });
 
