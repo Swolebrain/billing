@@ -2,7 +2,9 @@ import { stripeClient } from '@billing/core/integrations';
 import { deleteEntitlement, getEntitlementById } from '@billing/core/repositories/entitlements';
 import Stripe from 'stripe';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { testStripePriceBaseData, testStripeProductBaseData, testStripeProductForPriceEvents } from '../data';
+import { TEST_USER_ID, testStripePriceBaseData, testStripeProductBaseData, testStripeProductForPriceEvents } from '../data';
+import { getStripeCustomerForTest } from '../helpers';
+import { getMembershipByUserId } from '@billing/core/repositories/memberships';
 
 const sleep = (ms: number) =>
     new Promise((resolve) => {
@@ -44,6 +46,7 @@ describe('route: /webhooks', () => {
      */
     let stripeProductForPriceEvents: Stripe.Product | null = null;
     let stripePriceCreated: Stripe.Price | null = null;
+    let stripeSubscriptionCreated: Stripe.Subscription | null = null;
 
     beforeAll(async () => {
         try {
@@ -57,7 +60,7 @@ describe('route: /webhooks', () => {
         }
     });
 
-    it('should create an entitlement upon product creation on Stripe', async () => {
+    it('should create entitlements upon Stripe product creations', async () => {
         stripeProductCreated = await stripeClient.products.create(testStripeProductBaseData);
 
         await sleep(5000);
@@ -88,7 +91,7 @@ describe('route: /webhooks', () => {
         expect(linkedEntitlement.linkedStripePrices.length).toEqual(0);
     });
 
-    it('should upate entitlements after their linked products are updated', async () => {
+    it('should update entitlements upon Stripe linked product updates', async () => {
         if (!stripeProductCreated) throw new Error('Stripe product was not created for tests');
 
         const stripeProductUpdatedData = {
@@ -121,10 +124,14 @@ describe('route: /webhooks', () => {
         );
     });
 
-    it('should append price to entitlement upon price creation on Stripe', async () => {
+    it('should append prices to entitlements upon Stripe price creations', async () => {
         if (!stripeProductForPriceEvents) throw new Error('No product was created on Stripe for testing price events');
 
-        stripePriceCreated = await stripeClient.prices.create({ ...testStripePriceBaseData, product: stripeProductForPriceEvents.id });
+        stripePriceCreated = await stripeClient.prices.create({
+            ...testStripePriceBaseData,
+            product: stripeProductForPriceEvents.id,
+            active: false,
+        });
 
         if (!stripePriceCreated) throw new Error('Could not create price on Stripe');
 
@@ -155,11 +162,11 @@ describe('route: /webhooks', () => {
         );
     });
 
-    it('should update price on entitlements upon price updates from stripe', async () => {
+    it('should update prices in entitlements upon Stripe price updates', async () => {
         if (!stripeProductForPriceEvents) throw new Error('No product was created on Stripe for testing price events');
         if (!stripePriceCreated) throw new Error();
 
-        const stripePriceUpdated = await stripeClient.prices.update(stripePriceCreated.id, { active: false });
+        const stripePriceUpdated = await stripeClient.prices.update(stripePriceCreated.id, { active: true });
 
         if (!stripePriceUpdated) throw new Error('Could not update price on Stripe');
 
@@ -188,6 +195,67 @@ describe('route: /webhooks', () => {
                         (price) => !!price.priceId && price.priceId === stripePriceUpdated.id && price.active === stripePriceUpdated.active
                     )
                 ).toEqual(true);
+            },
+            { delayMs: 5000, maxRetry: 2 }
+        );
+    });
+
+    it('should link user memberships to Stripe subscriptions upon creation', async () => {
+        if (!stripePriceCreated) throw new Error();
+
+        const testStripeCustomer = await getStripeCustomerForTest();
+
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+
+        const stripeTimestamp = new Date(`${today.getFullYear()}-${today.getMonth() + 2}-${1}`).getTime() / 1000;
+
+        stripeSubscriptionCreated = await stripeClient.subscriptions.create({
+            customer: testStripeCustomer.id,
+            items: [{ price: stripePriceCreated.id }],
+            billing_cycle_anchor: Math.floor(stripeTimestamp),
+        });
+
+        await sleep(5000);
+
+        await exponentialBackoff(
+            async () => {
+                if (!stripeSubscriptionCreated) throw new Error('Could not update price on Stripe');
+
+                const membershipQueryResult = await getMembershipByUserId(TEST_USER_ID);
+
+                if (membershipQueryResult.$response.error) {
+                    throw membershipQueryResult.$response.error;
+                }
+
+                const membership = membershipQueryResult.Item;
+
+                expect(membership.linkedStripeSubscriptionId).toEqual(stripeSubscriptionCreated.id);
+            },
+            { delayMs: 5000, maxRetry: 2 }
+        );
+    });
+
+    it('should unlink user membership from Stripe subscription upon deletion', async () => {
+        if (!stripeSubscriptionCreated) throw new Error();
+
+        await stripeClient.subscriptions.del(stripeSubscriptionCreated.id);
+
+        await sleep(5000);
+
+        await exponentialBackoff(
+            async () => {
+                if (!stripeSubscriptionCreated) throw new Error();
+
+                const membershipQueryResult = await getMembershipByUserId(TEST_USER_ID);
+
+                if (membershipQueryResult.$response.error) {
+                    throw membershipQueryResult.$response.error;
+                }
+
+                const membership = membershipQueryResult.Item;
+
+                expect(membership.linkedStripeSubscriptionId).toBeNull();
             },
             { delayMs: 5000, maxRetry: 2 }
         );
