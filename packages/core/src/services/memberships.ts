@@ -165,7 +165,7 @@ export const handleCheckoutSessionCompletedEvent = async (stripeEvent: Stripe.Ev
 
             const entitlementQueryResponse = await getEntitlementById(typeof price.product === 'string' ? price.product : price.product.id);
             if (entitlementQueryResponse.$response.error) {
-                throw new Error();
+                throw entitlementQueryResponse.$response.error;
             }
 
             return { linkedStripeCheckoutSessionLineItemId: id, entitlementId: entitlementQueryResponse.Item.entitlementId };

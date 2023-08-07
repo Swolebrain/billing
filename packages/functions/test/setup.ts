@@ -8,4 +8,7 @@ beforeAll(async () => {
     saveMembership({ ...testMembershipBaseData, linkedStripeCustomerId: stripeCustomer.id });
 });
 
-afterAll(async () => {});
+afterAll(async () => {
+    const stripeCustomer = await getStripeCustomerForTest();
+    saveMembership({ ...testMembershipBaseData, linkedStripeCustomerId: stripeCustomer.id });
+});
