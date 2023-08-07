@@ -1,9 +1,7 @@
 import axios from 'axios';
 import { describe, expect, it } from 'vitest';
 import { CheckoutInitiateBody, CheckoutInitiateResponseBody } from '../../src/checkout';
-import { TEST_USER_ID } from '../data';
-
-const baseUrl = `https://api.solidsnake.millionairecodersclub.com`;
+import { TEST_USER_ID, baseUrl } from '../data';
 
 describe('route: /checkout', () => {
     it('POST /checkout/initiate', async () => {

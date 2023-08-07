@@ -1,5 +1,7 @@
 import { MembershipInterface } from '@billing/core/repositories/memberships';
 
+export const baseUrl = `https://api.solidsnake.millionairecodersclub.com`;
+
 export const TEST_USER_ID = 'TEST_USER_ID';
 
 export const testMembershipBaseData: Omit<MembershipInterface, 'linkedStripeCustomerId'> = {

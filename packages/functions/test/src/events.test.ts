@@ -3,38 +3,8 @@ import { deleteEntitlement, getEntitlementById } from '@billing/core/repositorie
 import Stripe from 'stripe';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { TEST_USER_ID, testStripePriceBaseData, testStripeProductBaseData, testStripeProductForPriceEvents } from '../data';
-import { getStripeCustomerForTest } from '../helpers';
+import { exponentialBackoff, getStripeCustomerForTest, sleep } from '../helpers';
 import { getMembershipByUserId } from '@billing/core/repositories/memberships';
-
-const sleep = (ms: number) =>
-    new Promise((resolve) => {
-        setTimeout(() => resolve(true), ms);
-    });
-
-const exponentialBackoff = async <TResult>(
-    cb: () => TResult,
-    options: {
-        delayMs: number;
-        delayMultiplier?: number;
-        maxRetry: number;
-    },
-    retryCount: number = 0
-): Promise<TResult> => {
-    const { delayMs, delayMultiplier, maxRetry } = { delayMultiplier: 1, ...options };
-
-    try {
-        await sleep(delayMs * delayMultiplier * retryCount);
-        const result = await cb();
-
-        return result;
-    } catch (err) {
-        if (retryCount < maxRetry) {
-            return exponentialBackoff(cb, options, retryCount + 1);
-        }
-
-        throw err;
-    }
-};
 
 describe('route: /webhooks', () => {
     let stripeProductCreated: Stripe.Product | null = null;

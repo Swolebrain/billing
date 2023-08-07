@@ -32,7 +32,6 @@ export const reportUsage = async ({
     });
 
     if (saveUsageRecordResult.$response.error) {
-        // Handle error
-        return;
+        throw saveUsageRecordResult.$response.error;
     }
 };

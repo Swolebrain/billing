@@ -2,6 +2,7 @@ import { getMembershipByUserId } from '@billing/core/repositories/memberships';
 import { createCustomerPortalSession } from '@billing/core/services/memberships';
 import { reportUsage } from '@billing/core/services/usage-records';
 import { ApiHandler } from 'sst/node/api';
+import Stripe from 'stripe';
 
 export const reportUsageRecord = ApiHandler(async (apiEvent, ctx) => {
     const pathParameters = apiEvent.pathParameters;
@@ -70,6 +71,10 @@ export const requestEntitlementAccess = ApiHandler(async (apiEvent, ctx) => {
         return { statusCode: 500 };
     }
 });
+
+export interface MembershipsCustomerPortalSessionResponse {
+    customerPortalSession: Stripe.BillingPortal.Session;
+}
 
 export const requestCustomerPortalSession = ApiHandler(async (apiEvent, ctx) => {
     const pathParameters = apiEvent.pathParameters;
